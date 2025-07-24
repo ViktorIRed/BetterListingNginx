@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png"
+        href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAB4CAYAAAA5ZDbSAAAACXBIWXMAAAsTAAALEwEAmpwYAAADHklEQVR4nO2dsU4UURiFrxtpDJZIlNCsyc7tfQ9o9n20MGLBC1jtrGKphYWJLoGCFdxZaxEKfQbFBoo9ZkDRwpgY5s7/X/i+5NRkzjfnzoWGEAAAAAAAAAAAAAAAAAAAAAAAAMAFehLmVIa+yrChMuxrEL6rDEqeQXhg/eyXHg3Dqspw2IpQJLeH7oeOyrBmJpYlp8WN3N/H9ePEj3zFjuVBmJlLZcnJLlR231yWnJaft2V7kSw5DSrDc3OBLDkdGoQDc3lITocG4chcHJLT8ddyh9eklzel0R1ppyu970lVJNUFOtjrzbTTPdbW8heNFtf16vYNG8Ev5qVxF5lV4hd63D3R21uP2hM8DNLrBcRWLZ9Um0u72g7X0wtGrsw+Q5tLu2kF18cy31iZdvBm8WEawfWFim+uzF/wd3dPtL0w37zg+rZs/XBEpx2MFtebF1z/KkTBctHB1vLn5gVzPMtNxt3j5gXzRwy5yV5v1rxg64ci+rMDBF/yFyKwYHsJCHZQlDINC3YgQQi2L0qZhgU7kCAE2xelTMOCHUgQgu2LUqZhwQ4kCMH2RSnTsGAHEoRg+6KUaViwAwlCsH1RyjQs2IEEIdi+KGUaFuxAghBsX5QyDQt2IEEIti9KmYYFO5AgBNsXpUzDgh1IEILti1KmYcEOJAjB9kUp07BgBxKEYPuilGlYsAMJQrB9Uco0LNiBBCHYvihlGhbsQIIQbF+UMg0LdiBBCLYvSpmGBTuQIATbF6VMw4IdSBCC7YtSpmHBDiQIwfZFKdOwYAcShGD7opRpWLADCUKwfVHKNCzYgQQh2L4oZZoUC/5m/VAk/urga/OCJ/ETBUcfL9kk7jcvuIob5g9GdCa4eNq84GnRp+Do4yWbFv3mBX+4N6eqODR/uCuf4qB20bjgU8nT3qomcUbJ0erbO1NVrCSRey65KtYQHI0EFy38o2iFTv2DWHJsd7l15wqd5ILPRVfFCt/k2ILg+t6T+Fj+58Xr7Ha9Uf9upklxxPEdL3oM1x1+1CQ+O+021YUKAAAAAAAAAAAAAAAAAAAAAAAAwv/yA6tSsD4v0lopAAAAAElFTkSuQmCC">
+    <title>File manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-4Q6Gf2aSP4eDXB8Miphtr37CMZZQ5oXLH2yaXMJ2w8e2ZtHTl7GptT4jmndRuHDT" crossorigin="anonymous">
+
+    <style>
+        body {
+            margin: 0;
+            background-color: #f8f9fa;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .app-header {
+            background-color: #ffffff;
+            border-bottom: 1px solid #dee2e6;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .app-header .btn-back {
+            display: none;
+            font-size: 1.25rem;
+            margin-right: 0.5rem;
+        }
+
+        .folder-path {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #212529;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        main.file-manager {
+            flex: 1 0 auto;
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        @media (max-width: 768px) {
+            main.file-manager {
+                padding: 1rem;
+            }
+        }
+
+        .search-wrapper {
+            position: relative;
+            max-width: 400px;
+            margin-bottom: 2rem;
+        }
+
+        .search-input {
+            border-radius: 30px;
+            padding-left: 2.5rem;
+            height: 44px;
+            font-size: 0.95rem;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            font-size: 1rem;
+        }
+
+        .file-card {
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            transition: all 0.2s ease-in-out;
+            height: 100%;
+        }
+
+        .file-card:hover {
+            background-color: #f1f3f5;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-grow: 1;
+        }
+
+        .file-icon {
+            font-size: 1.5rem;
+            color: #6c757d;
+        }
+
+        .file-name {
+            font-weight: 500;
+            font-size: 1rem;
+        }
+
+        .file-meta {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        .file-actions {
+            margin-top: 0.75rem;
+            text-align: start;
+        }
+
+        .file-actions a {
+            font-size: 0.85rem;
+            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: inline-block;
+            text-decoration: none;
+            color: inherit;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .file-actions a:hover {
+            background-color: #e9ecef;
+        }
+
+        .pagination-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+
+        .pagination {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+        }
+
+        .pagination .page-link {
+            color: #0d6efd;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+            color: #fff;
+        }
+
+        @media (max-width: 576px) {
+            .pagination-container {
+                justify-content: center;
+            }
+
+            .pagination .page-link {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.6rem;
+            }
+
+            .pagination {
+                gap: 0.2rem;
+            }
+        }
+
+        /* Footer */
+        footer.footer {
+            background-color: #343a40;
+            color: #ffffff;
+            padding: 1rem 0;
+        }
+
+        footer .footer-links a {
+            color: #adb5bd;
+            text-decoration: none;
+            margin: 0 0.5rem;
+        }
+
+        footer .footer-links a:hover {
+            color: #ffffff;
+            text-decoration: underline;
+        }
+    </style>
+    <style id="hr_style_reboot">
+        hr {
+            display: none;
+        }
+    </style>
+    <script>
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', runScript);
+        } else {
+            runScript();
+        }
+
+        function runScript() {
+            document.querySelectorAll('hr').forEach(el => el.remove());
+        }
+    </script>
+</head>
+
+<body id="body_listing">
+    <header class="app-header d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center">
+            <button id="backButton" class="btn btn-link btn-back p-0 me-2">&larr;</button>
+            <div class="folder-path">
+                📁 <span id="currentFolder">MyFiles</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="file-manager">
+        <div class="search-wrapper mb-4">
+            <i class="search-icon">🔍</i>
+            <input type="text" id="searchInput" class="form-control search-input" placeholder="Поиск по файлам..." />
+        </div>
+        <div id="fileListData" class="row g-2"></div>
+        <a href="#" id="backFolderDiv" class="col-12 mb-3 file-name text-center"
+            style="cursor: pointer; display: none; text-decoration: none;">
+            <div class="file-card h-100 d-flex flex-column">
+                <div class="file-info d-flex align-items-center text-center">
+                    <span class="file-icon me-2">
+                        <span style="display:block; font-size:1.5rem;">📁</span>
+                    </span>
+                    <div id="backFolderName" class="file-name text-center" style="text-decoration: dashed;"></div>
+                </div>
+            </div>
+        </a>
+        <div id="fileList" class="row g-3"></div>
+        <nav aria-label="Page navigation" class="pagination-container">
+            <ul id="pagination" class="pagination mb-0"></ul>
+        </nav>
+
+    </main>

@@ -1,0 +1,321 @@
+<footer class="footer mt-auto py-3 text-center">
+    <div class="container">
+        <small>&copy; 2025 MyFiles. Все права защищены.</small>
+    </div>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-j1CDi7MgGQ12Z7Qab0qlWQ/Qqz24Gc6BM0thvEMVjHnfYGF0rmFCozFSxQBxwHKO"
+    crossorigin="anonymous"></script>
+<script>
+    const preNginx = document.querySelector('pre');
+    const preData = [];
+    if (preNginx) {
+        const lines = preNginx.textContent.split('\n').map(line => line.trim()).filter(line => line);
+
+        let idCounter = 1;
+        const baseUrl = window.location.href;
+
+        function formatDate(rawDate) {
+            const months = {
+                Jan: '01', Feb: '02', Mar: '03', Apr: '04', May: '05', Jun: '06',
+                Jul: '07', Aug: '08', Sep: '09', Oct: '10', Nov: '11', Dec: '12'
+            };
+            const [day, mon, year] = rawDate.split('-');
+            return `${year}-${months[mon]}-${day.padStart(2, '0')}`;
+        }
+
+        function formatSize(bytes) {
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            if (bytes === '') return '';
+            let i = 0;
+            let size = Number(bytes);
+            while (size >= 1024 && i < sizes.length - 1) {
+                size /= 1024;
+                i++;
+            }
+            return `${size.toFixed(1)} ${sizes[i]}`;
+        }
+
+        function capitalizeFirst(str) {
+            if (!str) return str;
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        lines.forEach(line => {
+            const firstSpace = line.indexOf(' ');
+            const rawName = firstSpace === -1 ? line : line.slice(0, firstSpace);
+
+            if (rawName === '../') return;
+
+            const rest = firstSpace === -1 ? '' : line.slice(firstSpace).trim();
+
+            let name;
+            if (rawName.endsWith('/')) {
+                name = capitalizeFirst(rawName.slice(0, -1));
+            } else {
+                name = rawName;
+            }
+
+            const url = new URL(rawName, baseUrl).href;
+            const type = rawName.endsWith('/') ? 'folder' : 'file';
+
+            const match = rest.match(/^(\d{2}-\w{3}-\d{4}) (\d{2}:\d{2})\s+(\d+|-)$/);
+
+            let date = '';
+            let size = '';
+            if (match) {
+                date = formatDate(match[1]);
+                size = match[3] === '-' ? '' : formatSize(match[3]);
+            }
+
+            preData.push({
+                id: idCounter++,
+                name,
+                date,
+                size,
+                url,
+                type
+            });
+        });
+        preNginx.remove();
+    }
+</script>
+<script>
+    const iconBaseUrl = "https://cdn.bluraxe.org/myBetterListing/icons/";
+    const supportedExtensions = ['img', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png', 'gif', 'txt', 'csv'];
+    const use2Icon = true; // true = 📄 or 📁, false = const iconBaseUrl use;
+</script>
+<script>
+    const folderStack = [];
+    let currentPage = 1;
+    const itemsPerPage = 6;
+
+    const files = preData;
+
+    function getFileIcon(filename, type) {
+        if (type === 'icon') {
+            if (use2Icon) return `<span style="font-size:1.5rem;">📄</span>`;
+
+            if (filename.includes('.')) {
+                const parts = filename.split('.');
+                const ext = parts[parts.length - 1].toLowerCase();
+
+                if (supportedExtensions.includes(ext)) {
+                    return `
+                <img 
+                    src="${iconBaseUrl}${ext}.png" 
+                    alt="${ext}" 
+                    width="32" 
+                    height="32"
+                    onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block'"
+                />
+                <span style="display:none; font-size:1.5rem;">📄</span>
+            `;
+                } else {
+                    return `<span style="font-size:1.5rem;">📄</span>`;
+                }
+            }
+
+            return `<span style="font-size:1.5rem;">📄</span>`;
+        }
+
+        if (type === 'folder') {
+            if (use2Icon) return `<span style="font-size:1.5rem;">📁</span>`;
+            else {
+                return `
+                <img 
+                    src="${iconBaseUrl}folder.png" 
+                    alt="Папка" 
+                    width="24" 
+                    height="24"
+                    onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block'"
+                />
+                <span style="display:none; font-size:1.5rem;">📁</span>
+            `;
+            }
+        }
+
+
+
+    }
+
+    function renderFiles(fileList) {
+        const container = document.getElementById('fileList');
+        container.innerHTML = '';
+
+        if (fileList.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center w-100 mt-3">Файлы не найдены.</p>';
+            return;
+        }
+
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        const toRender = fileList.slice(start, end);
+
+        toRender.forEach(file => {
+            const col = document.createElement('div');
+            col.className = 'col-md-6 col-lg-4';
+
+            let iconElement = '';
+            if (file.type === 'folder') {
+                iconElement = getFileIcon("", "folder");
+            } else {
+                iconElement = getFileIcon(file.name, "icon");
+            }
+
+            const sizeText = file.type === 'folder' ? 'Папка' : file.size;
+
+            col.innerHTML = `
+            <div class="file-card h-100 d-flex flex-column">
+                <div class="file-info">
+                    <span class="file-icon me-2">${iconElement}</span>
+                    <div>
+                        <div class="file-name">${truncateFileNameCustom(file.name)}</div>
+                        <div class="file-meta">Дата: ${file.date} ${file.type === 'folder' ? '' : `| Размер: ${sizeText}`}</div>
+                    </div>
+                </div>
+                <div class="file-actions mt-2">
+                    <a href="${file.url.trim()}" class="action-link w-100 text-center folder-link">
+                        ${file.type === 'folder' ? 'Открыть' : 'Скачать'}
+                    </a>
+                </div>
+            </div>
+        `;
+
+            function truncateFileNameCustom(name, maxLength = 25) {
+                const dotIndex = name.lastIndexOf('.');
+                if (dotIndex === -1) return name;
+
+                const ext = name.slice(dotIndex);
+                const base = name.slice(0, dotIndex);
+
+                const suffix = '..>';
+                const availableLength = maxLength - suffix.length - ext.length;
+
+                if (base.length > availableLength) {
+                    return base.slice(0, availableLength) + suffix + ext;
+                } else {
+                    return base + ext;
+                }
+            }
+
+            container.appendChild(col);
+        });
+
+        setupPagination(fileList.length);
+    }
+
+    function setupPagination(totalItems) {
+        const pagination = document.getElementById('pagination');
+        pagination.innerHTML = '';
+
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+        if (totalPages <= 1) return;
+
+        function createPageItem(page, text = null, disabled = false, active = false) {
+            const li = document.createElement('li');
+            li.className = 'page-item';
+            if (disabled) li.classList.add('disabled');
+            if (active) li.classList.add('active');
+            li.innerHTML = `<a class="page-link" href="#">${text ?? page}</a>`;
+            if (!disabled && !active) {
+                li.addEventListener('click', e => {
+                    e.preventDefault();
+                    currentPage = page;
+                    renderFiles(getCurrentFileList());
+                    setupPagination(totalItems);
+                });
+            }
+            return li;
+        }
+
+        pagination.appendChild(createPageItem(1, '<<', currentPage === 1));
+        pagination.appendChild(createPageItem(currentPage - 1, '<', currentPage === 1));
+
+        let startPage = currentPage - 1;
+        let endPage = currentPage + 1;
+
+        if (startPage < 1) {
+            startPage = 1;
+            endPage = Math.min(3, totalPages);
+        }
+        if (endPage > totalPages) {
+            endPage = totalPages;
+            startPage = Math.max(1, totalPages - 2);
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            pagination.appendChild(createPageItem(i, null, false, i === currentPage));
+        }
+
+        pagination.appendChild(createPageItem(currentPage + 1, '>', currentPage === totalPages));
+        pagination.appendChild(createPageItem(totalPages, '>>', currentPage === totalPages));
+    }
+
+    function getCurrentFileList() {
+        const term = document.getElementById('searchInput').value.toLowerCase();
+        return files.filter(file => {
+            const parts = file.name.toLowerCase().split('.');
+            const nameWithoutExt = parts.length > 1 ? parts.slice(0, -1).join('.') : parts[0];
+            return nameWithoutExt.includes(term);
+        });
+    }
+
+    function setupSearch() {
+        const input = document.getElementById('searchInput');
+        input.addEventListener('input', () => {
+            currentPage = 1;
+            renderFiles(getCurrentFileList());
+            setupPagination(getCurrentFileList().length);
+        });
+    }
+
+    window.addEventListener('popstate', () => {
+        initApp();
+    });
+
+    function getParentPath(pathname) {
+        const segments = pathname.split('/').filter(Boolean);
+
+        if (segments.length === 0) {
+            return '/';
+        }
+        segments.pop();
+
+        if (segments.length === 0) {
+            return '/';
+        }
+
+        return '/' + segments.join('/');
+    }
+    function initApp() {
+        const path = window.location.pathname;
+        const firstSegment = '/' + path.split('/').filter(Boolean)[0] || '';
+        document.getElementById('currentFolder').textContent = 'MyFiles';
+        if (path === '/' || path === '') {
+            document.getElementById('fileListData').innerHTML = `<p class="text-muted text-center mt-2">Содержимое папки: /</p>`;
+            document.getElementById('backButton').style.display = 'none';
+            currentPage = 1;
+            renderFiles(files);
+        } else {
+            const folderName = String(path);
+            document.getElementById('backFolderDiv').style.display = 'block';
+            document.getElementById('backFolderDiv').href = `${window.location.protocol + "//" + window.location.host + getParentPath(path)}`;
+            document.getElementById('backFolderName').innerHTML = `..${getParentPath(path)}`;
+            document.getElementById('backButton').style.display = 'none';
+            document.getElementById('fileListData').innerHTML = `<p class="text-muted text-center mt-2">Содержимое папки: ${String(path)}</p>`;
+            currentPage = 1;
+            renderFiles(files);
+            if (!folderStack.includes('Документы')) folderStack.push('Документы');
+        }
+        setupSearch();
+    }
+    window.onload = () => {
+        initApp();
+        document.getElementById('hr_style_reboot').innerText = 'hr { display: block; }';
+    };
+</script>
+
+</body>
+
+</html>
